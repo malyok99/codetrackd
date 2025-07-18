@@ -8,6 +8,8 @@
 #include <thread>
 #include <chrono>
 
+#include "logger.h"
+
 bool IsDigits(const std::string& str) {
   for (char c : str) {
     if (!isdigit(c)) return false;
@@ -56,10 +58,12 @@ int main() {
       std::cout << "No nvim processes found" << std::endl;
 
       if (editorOpened) {
-        auto end = std::chrono::high_resolution_clock::now();
+        std::chrono::high_resolution_clock::time_point end = std::chrono::high_resolution_clock::now();
 
         std::chrono::duration<double> duration = end - start;
         std::cout << "Time in Nvim: " << duration.count() / 60.0 << "minutes" << std::endl;
+
+        SaveTimeToLog(GetTodayDate(), duration.count() / 60.0);
 
         editorOpened = false;
       }

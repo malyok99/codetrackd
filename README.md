@@ -1,31 +1,37 @@
-# codetrackd — A Daemon that counts hours you code.
+# codetrackd
 
-Started with `nvim`, but that’s just the beginning.  
+Built to track how much time you spend coding.  
+Started with `nvim`, but the framework is editor-agnostic - extend it to whatever you touch.
 
-Work in progress...
+## 📦 Build
 
-## STATUS: WIP
+```bash
+# Build with
+g++ -std=c++20 -O2 main.cpp logger.cpp -o codetrackd
+```
 
-This is only a skeleton.  
-It scans `/proc`, detects when `nvim` is running, and prints how long the session lasted in minutes.
+## ⚔️ Notes
 
-## TODO:
+What it does:
+- Scans `/proc` for `nvim`
+- Measures coding session duration
+- Accumulates daily totals
+- Logs to a persistent file
 
-- [ ] Detect **multiple editors**, not just `nvim`
-- [ ] Write time logs to files (e.g., `~/.local/share/codetrackd/coding_sessions.txt`)
-- [ ] Aggregate and log time per day
-- [ ] Output the last 7 days coding time with a simple command ->
+## TODO
+
+- [-] Detect **multiple editors**, not just `nvim`
+- [+] Write time logs to files (`~/.local/share/codetrackd/coding_sessions.txt`)
+- [+] Aggregate and log time per day
+- [-] CLI command: total time for the last 7 days
+
+## Output Format:
+
 ```txt
 - 17.07.25 -
 coding time - 2 hours 13 minutes
 - 18.07.25 -
-coding time - 1 hours 48 minutes
+coding time - 1 hour 48 minutes
 - 19.07.25 -
 coding time - 3 hours 23 minutes
-...
-...
-...
-...
-== This week ==
-coding time - 9 hours 35 minutes
 ```
