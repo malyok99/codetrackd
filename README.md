@@ -16,12 +16,11 @@ What it does:
 - Scans `/proc` for `nvim`
 - Measures coding session duration
 - Accumulates daily totals
-- Logs to a persistent file
+- Logs to a persistent file (~/.programming_tracker/coding_log.txt)
 
 ## TODO
 
 - [-] Detect **multiple editors**, not just `nvim`
-- [+] Write time logs to files (`~/.local/share/codetrackd/coding_sessions.txt`)
 - [+] Aggregate and log time per day
 - [-] CLI command: total time for the last 7 days
 
