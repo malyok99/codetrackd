@@ -5,4 +5,4 @@
 std::string GetTodayDate();
 std::string GetLogPath();
 void SaveTimeToLog(const std::string& date, double timeMinutes);
-
+void PrintLastNDaysLog(int days);

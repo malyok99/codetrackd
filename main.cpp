@@ -7,8 +7,23 @@
 #include <cstdlib>
 #include <thread>
 #include <chrono>
+#include <algorithm>
 
 #include "logger.h"
+
+const std::vector<std::string> editors = {
+    "nvim",
+    "vim",
+    "emacs",
+    "nano",
+    "clion",
+    "pycharm",
+    "pycharm64",
+    "code",
+    "code-oss",
+    "idea",
+    "idea64"
+};
 
 bool IsDigits(const std::string& str) {
   for (char c : str) {
@@ -37,7 +52,7 @@ std::vector<int> FindNvimPids() {
     std::ifstream comm_file("/proc/" + pid_str + "/comm");
     std::string proccess_name;
 
-    if (comm_file >> proccess_name && proccess_name == "nvim") {
+    if (comm_file >> proccess_name && std::find(editors.begin(), editors.end(), process_name) != editors.end()) {
       pids.push_back(std::stoi(pid_str));
     }
   }
@@ -46,7 +61,17 @@ std::vector<int> FindNvimPids() {
   return pids;
 }
 
-int main() {
+int main(int argc, char* argv[]) {
+  if (argc == 3 && std::string(argv[1]) == "--show") {
+    int days = std::stoi(argv[2]);
+    if (days <= 0 || days > 365) {
+      std::cerr << "Invalid number of days (1-365 allowed)." << std::endl;
+      return 1;
+    }
+    PrintLastNDaysLog(days);
+    return 0;
+  }
+
   bool editorOpened = false;
 
   std::chrono::high_resolution_clock::time_point start;
