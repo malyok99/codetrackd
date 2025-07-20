@@ -1,36 +1,33 @@
 # codetrackd
 
-Built to track how much time you spend coding.  
-Started with `nvim`, but the framework is editor-agnostic - extend it to whatever you touch.
+Built to track exactly how much time you spend *actually* coding.
 
-## 📦 Build
+## 📦 Build & Install
 
 ```bash
-# Build with
-g++ -std=c++20 -O2 main.cpp logger.cpp -o codetrackd
+# Install with
+./install_daemon.sh
+
+# Remove with
+./uninstall_daemon.sh
 ```
 
-## ⚔️ Notes
+## ⚔️ What codetrackd *really* does
 
-What it does:
-- Scans `/proc` for `nvim`
-- Measures coding session duration
-- Accumulates daily totals
-- Logs to a persistent file (~/.programming_tracker/coding_log.txt)
+- Scans `/proc` for **most popular editors** listed in `main.cpp` 
+- Measures your active coding session duration
+- Aggregates and logs daily totals
+- Writes persistent logs to `~/.programming_tracker/coding_log.txt`
 
-## TODO
+## Usage example - Summarize your coding time with a single command:
 
-- [-] Detect **multiple editors**, not just `nvim`
-- [+] Aggregate and log time per day
-- [-] CLI command: total time for the last 7 days
+```bash
+~ ❯ codetrackd --show 3
+=== Last 3 Days of Coding ===
+16.07.25: no data
+17.07.25: coding time - 2 hours 3 minutes
+18.07.25: coding time - 5 hours 13 minutes
 
-## Output Format:
-
-```txt
-- 17.07.25 -
-coding time - 2 hours 13 minutes
-- 18.07.25 -
-coding time - 1 hour 48 minutes
-- 19.07.25 -
-coding time - 3 hours 23 minutes
+== SUMMARY ==
+coding hours - 7 hours 26 minutes
 ```
