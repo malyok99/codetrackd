@@ -50,9 +50,9 @@ std::vector<int> FindNvimPids() {
     }
 
     std::ifstream comm_file("/proc/" + pid_str + "/comm");
-    std::string proccess_name;
+    std::string process_name;
 
-    if (comm_file >> proccess_name && std::find(editors.begin(), editors.end(), process_name) != editors.end()) {
+    if (comm_file >> process_name && std::find(editors.begin(), editors.end(), process_name) != editors.end()) {
       pids.push_back(std::stoi(pid_str));
     }
   }
