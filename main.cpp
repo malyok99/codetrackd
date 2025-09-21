@@ -1,4 +1,3 @@
-#include <cerrno>
 #include <iostream>
 #include <dirent.h>
 #include <fstream>
@@ -8,21 +7,13 @@
 #include <thread>
 #include <chrono>
 #include <algorithm>
+#include <cctype>
 
 #include "logger.h"
 
 const std::vector<std::string> editors = {
-    "nvim",
-    "vim",
-    "emacs",
-    "nano",
-    "clion",
-    "pycharm",
-    "pycharm64",
-    "code",
-    "code-oss",
-    "idea",
-    "idea64"
+    "nvim", "vim", "emacs", "nano", "clion", "pycharm", 
+    "pycharm64", "code", "code-oss", "idea", "idea64"
 };
 
 bool IsDigits(const std::string& str) {
@@ -32,7 +23,7 @@ bool IsDigits(const std::string& str) {
   return true;
 }
 
-std::vector<int> FindNvimPids() {
+std::vector<int> FindEditorPids() {
   std::vector<int> pids;
   DIR* proc_dir = opendir("/proc");
 
@@ -52,8 +43,14 @@ std::vector<int> FindNvimPids() {
     std::ifstream comm_file("/proc/" + pid_str + "/comm");
     std::string process_name;
 
-    if (comm_file >> process_name && std::find(editors.begin(), editors.end(), process_name) != editors.end()) {
-      pids.push_back(std::stoi(pid_str));
+    if (comm_file >> process_name) {
+      // Check if process name matches any editor
+      for (const auto& editor : editors) {
+        if (process_name.find(editor) != std::string::npos) {
+          pids.push_back(std::stoi(pid_str));
+          break;
+        }
+      }
     }
   }
 
@@ -73,38 +70,42 @@ int main(int argc, char* argv[]) {
   }
 
   bool editorOpened = false;
-
-  std::chrono::high_resolution_clock::time_point start;
+  std::chrono::steady_clock::time_point start;
+  double accumulatedTime = 0.0;
 
   while (true) {
-    std::vector<int> pids = FindNvimPids();
+    std::vector<int> pids = FindEditorPids();
 
     if (pids.empty()) {
-      std::cout << "No nvim processes found" << std::endl;
-
       if (editorOpened) {
-        std::chrono::high_resolution_clock::time_point end = std::chrono::high_resolution_clock::now();
-
+        std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
         std::chrono::duration<double> duration = end - start;
-        std::cout << "Time in Nvim: " << duration.count() / 60.0 << "minutes" << std::endl;
-
-        SaveTimeToLog(GetTodayDate(), duration.count() / 60.0);
-
+        accumulatedTime += duration.count();
+        
+        std::cout << "Editor closed. Time in editor: " << accumulatedTime / 60.0 << " minutes" << std::endl;
+        SaveTimeToLog(GetTodayDate(), accumulatedTime / 60.0);
+        
         editorOpened = false;
+        accumulatedTime = 0.0;
       }
     } else {
       if (!editorOpened) {
-        start = std::chrono::high_resolution_clock::now();
+        start = std::chrono::steady_clock::now();
         editorOpened = true;
-      }
-
-      std::cout << "Nvim processes:" << std::endl;
-      for (int pid : pids) {
-        std::cout << " - PID: " << pid << std::endl;
+        std::cout << "Editor processes detected:" << std::endl;
+        for (int pid : pids) {
+          std::cout << " - PID: " << pid << std::endl;
+        }
+      } else {
+        // Update the time if editor is still open
+        std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
+        std::chrono::duration<double> duration = now - start;
+        start = now;
+        accumulatedTime += duration.count();
       }
     }
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(30000));
+    std::this_thread::sleep_for(std::chrono::milliseconds(5000)); // Check every 5 seconds
   }
 
   return 0;

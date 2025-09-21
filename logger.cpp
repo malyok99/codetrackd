@@ -6,6 +6,7 @@
 #include <cmath>
 #include <iomanip>
 #include <sstream>
+#include <cstdlib>
 
 #include "logger.h"
 
@@ -31,9 +32,29 @@ void SaveTimeToLog(const std::string& date, double timeMinutes) {
   while (std::getline(infile, line)) {
     if (line.starts_with("-") && line.ends_with("-")) {
       std::string logDate = line.substr(1, line.size() - 2);
-      std::getline(infile, line);
-      double minutes = std::stod(line.substr(line.find('-') + 1));
-      log[logDate] = minutes;
+      if (std::getline(infile, line)) {
+        size_t dashPos = line.find("coding time - ");
+        if (dashPos != std::string::npos) {
+          std::string timeStr = line.substr(dashPos + 14);
+          size_t hourPos = timeStr.find(" hour");
+          size_t minPos = timeStr.find(" minute");
+          
+          double minutes = 0;
+          if (hourPos != std::string::npos) {
+            int hours = std::stoi(timeStr.substr(0, hourPos));
+            size_t minStart = timeStr.find(" ", hourPos + 5);
+            if (minStart != std::string::npos && minPos != std::string::npos) {
+              int mins = std::stoi(timeStr.substr(minStart + 1, minPos - minStart - 1));
+              minutes = hours * 60 + mins;
+            } else {
+              minutes = hours * 60;
+            }
+          } else if (minPos != std::string::npos) {
+            minutes = std::stoi(timeStr.substr(0, minPos));
+          }
+          log[logDate] = minutes;
+        }
+      }
     }
   }
 
@@ -48,20 +69,19 @@ void SaveTimeToLog(const std::string& date, double timeMinutes) {
     int min = static_cast<int>(minutes) % 60;
 
     if (hrs > 0)
-      outfile << "coding time - " << hrs << " hour " << min << " minutes\n";
+      outfile << "coding time - " << hrs << " hour" << (hrs != 1 ? "s " : " ") << min << " minute" << (min != 1 ? "s" : "") << "\n";
     else
-      outfile << "coding time - " << min << " minutes\n";
+      outfile << "coding time - " << min << " minute" << (min != 1 ? "s" : "") << "\n";
   }
 }
 
 void PrintLastNDaysLog(int days) {
   std::ifstream infile(GetLogPath());
   if (!infile) {
-    std::cerr << "Failed to open log file." << std::endl;
+    std::cerr << "No log file found." << std::endl;
     return;
   }
 
-  std::map<std::string, std::string> logs;
   std::map<std::string, double> minutesMap;
 
   std::string line;
@@ -71,25 +91,26 @@ void PrintLastNDaysLog(int days) {
     if (line.starts_with("-") && line.ends_with("-")) {
       currentDate = line.substr(1, line.size() - 2);
     } else if (!currentDate.empty()) {
-      logs[currentDate] = line;
-
-      // parse minutes
-      size_t dash = line.find("coding time - ");
-      if (dash != std::string::npos) {
-        std::istringstream iss(line.substr(dash + 14));
-        int hrs = 0, mins = 0;
-        std::string temp;
-
-        iss >> hrs >> temp >> mins; // "hour"/"hours" gets skipped
-
-        if (temp == "hour" || temp == "hours") {
-          iss >> temp; // skip "minutes"
-        } else {
-          mins = hrs;
-          hrs = 0;
+      size_t dashPos = line.find("coding time - ");
+      if (dashPos != std::string::npos) {
+        std::string timeStr = line.substr(dashPos + 14);
+        size_t hourPos = timeStr.find(" hour");
+        size_t minPos = timeStr.find(" minute");
+        
+        double minutes = 0;
+        if (hourPos != std::string::npos) {
+          int hours = std::stoi(timeStr.substr(0, hourPos));
+          size_t minStart = timeStr.find(" ", hourPos + 5);
+          if (minStart != std::string::npos && minPos != std::string::npos) {
+            int mins = std::stoi(timeStr.substr(minStart + 1, minPos - minStart - 1));
+            minutes = hours * 60 + mins;
+          } else {
+            minutes = hours * 60;
+          }
+        } else if (minPos != std::string::npos) {
+          minutes = std::stoi(timeStr.substr(0, minPos));
         }
-
-        minutesMap[currentDate] = hrs * 60 + mins;
+        minutesMap[currentDate] = minutes;
       }
     }
   }
@@ -111,10 +132,17 @@ void PrintLastNDaysLog(int days) {
     strftime(buf, sizeof(buf), "%d.%m.%y", &temp_tm);
     std::string day(buf);
 
-    auto it = logs.find(day);
-    if (it != logs.end()) {
-      std::cout << day << ": " << it->second << "\n";
-      totalMinutes += minutesMap[day];
+    auto it = minutesMap.find(day);
+    if (it != minutesMap.end()) {
+      int hrs = static_cast<int>(it->second) / 60;
+      int min = static_cast<int>(it->second) % 60;
+      
+      if (hrs > 0)
+        std::cout << day << ": coding time - " << hrs << " hour" << (hrs != 1 ? "s " : " ") << min << " minute" << (min != 1 ? "s" : "") << "\n";
+      else
+        std::cout << day << ": coding time - " << min << " minute" << (min != 1 ? "s" : "") << "\n";
+      
+      totalMinutes += it->second;
     } else {
       std::cout << day << ": no data\n";
     }
@@ -127,7 +155,6 @@ void PrintLastNDaysLog(int days) {
   std::cout << "\n== SUMMARY ==\n";
   std::cout << "coding hours - ";
   if (totalHrs > 0)
-    std::cout << totalHrs << " hours ";
-  std::cout << totalMin << " minutes\n";
+    std::cout << totalHrs << " hour" << (totalHrs != 1 ? "s " : " ");
+  std::cout << totalMin << " minute" << (totalMin != 1 ? "s" : "") << "\n";
 }
-
