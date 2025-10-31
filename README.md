@@ -1,3 +1,5 @@
+> ⚠️ **Project closed:** This repository is now part of [Prophet.Core](https://github.com/malyok99/prophet.core).
+
 # codetrackd
 
 Built to track exactly how much time you spend *actually* coding.
